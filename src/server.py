@@ -1,4 +1,4 @@
-"""OST Calendar MCP Server — merges OST timetable + Outlook calendar."""
+"""ICS Calendar MCP Server — merges multiple ICS feeds into smart tools."""
 
 from __future__ import annotations
 
@@ -13,20 +13,11 @@ from fastmcp import FastMCP
 
 TZ = ZoneInfo("Europe/Zurich")
 
-CALENDAR_FEEDS: dict[str, str] = {
-    "stundenplan": os.environ.get(
-        "STUNDENPLAN_URL",
-        "https://stundenplan-sg.ost.ch/Skripts/getICS.aspx"
-        "?node=00d59bb4-af99-4202-9e48-8a0425dac174"
-        "&alarm=true&t=&et=a&x=0xCD5EC5DE53670529EA2E7ACFCDD4EC5DD1FCF990",
-    ),
-    "outlook": os.environ.get(
-        "OUTLOOK_URL",
-        "https://outlook.office365.com/owa/calendar/"
-        "c6c897c0d9d245258f0661cfad8186ee@ost.ch/"
-        "81ed040830fb44c893dc3fac4c1e42e34637120838321513935/calendar.ics",
-    ),
-}
+
+def _get_feed_urls() -> list[str]:
+    """Read ICS feed URLs from CALENDAR_URLS env var (comma-separated)."""
+    raw = os.environ.get("CALENDAR_URLS", "")
+    return [url.strip() for url in raw.split(",") if url.strip()]
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -34,9 +25,12 @@ CALENDAR_FEEDS: dict[str, str] = {
 
 def _fetch_calendars() -> list[Calendar]:
     """Fetch and parse all configured ICS feeds."""
+    urls = _get_feed_urls()
+    if not urls:
+        return []
     calendars = []
     with httpx.Client(timeout=30, follow_redirects=True) as client:
-        for name, url in CALENDAR_FEEDS.items():
+        for url in urls:
             resp = client.get(url)
             resp.raise_for_status()
             calendars.append(Calendar.from_ical(resp.content))
@@ -130,10 +124,10 @@ def _format_event_list(events: list[dict], label: str) -> str:
 # ---------------------------------------------------------------------------
 
 mcp = FastMCP(
-    "OST Calendar",
+    "ICS Calendar",
     instructions=(
-        "MCP-Server für Jeremys OST-Stundenplan und Outlook-Kalender. "
-        "Alle Zeiten sind Europe/Zurich. Antworte auf Deutsch."
+        "MCP-Server der mehrere ICS-Kalender zusammenführt. "
+        "Alle Zeiten sind Europe/Zurich."
     ),
 )
 

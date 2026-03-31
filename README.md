@@ -1,52 +1,68 @@
-# OST Calendar MCP Server
+<p align="center">
+  <img src="logo.png" alt="ICS Calendar MCP" width="800">
+</p>
 
-MCP-Server der den OST-Stundenplan und Outlook-Kalender zusammenführt und über smarte Tools abrufbar macht.
+# ICS Calendar MCP Server
 
-## Kalender-Quellen
+MCP server that merges multiple ICS calendar feeds and exposes them through smart tools. Built with [FastMCP](https://gofastmcp.com/).
 
-| Quelle | Beschreibung |
-|--------|-------------|
-| `stundenplan` | OST Stundenplan (stundenplan-sg.ost.ch) |
-| `outlook` | Outlook/Teams Kalender (office365.com) |
+Works with any standard ICS feed: **Outlook**, **Google Calendar**, **Apple**, **OST Stundenplan**, etc.
 
 ## Tools
 
-| Tool | Beschreibung |
+| Tool | Description |
 |------|-------------|
-| `get_events_today` | Alle Termine von heute |
-| `get_events_tomorrow` | Alle Termine von morgen |
-| `get_events_this_week` | Wochenübersicht (Mo–So) gruppiert nach Tag |
-| `get_next_event` | Nächster anstehender Termin mit Countdown |
-| `get_events_by_date` | Termine an einem bestimmten Datum |
-| `get_events_range` | Termine in einem Zeitraum |
-| `search_events` | Stichwortsuche über Titel, Ort & Beschreibung |
-| `get_free_slots_today` | Freie Zeitfenster zwischen Terminen |
-| `get_week_overview` | Kompakte Statistik: Termine & Stunden pro Tag |
+| `get_events_today` | Get all events for today |
+| `get_events_tomorrow` | Get all events for tomorrow |
+| `get_events_this_week` | Weekly overview (Mon–Sun) grouped by day |
+| `get_next_event` | Next upcoming event with countdown |
+| `get_events_by_date` | Events on a specific date |
+| `get_events_range` | Events within a date range |
+| `search_events` | Keyword search across title, location & description |
+| `get_free_slots_today` | Free time slots between events |
+| `get_week_overview` | Compact stats: events & hours per day |
 
-## Setup
+## Quick Start
+
+### Docker (recommended)
 
 ```bash
-podman compose up -d --build
+cp .env.example .env
+# Add your ICS feed URLs to .env
+
+docker compose up -d --build
 ```
 
-Server läuft auf Port **8001** (Streamable HTTP).
+The server runs on `http://localhost:8001/mcp/` (Streamable HTTP transport).
 
-### VS Code MCP Config
+### Local
+
+```bash
+pip install .
+export CALENDAR_URLS="https://calendar.google.com/.../basic.ics,https://outlook.office365.com/.../calendar.ics"
+fastmcp run src.server:mcp --transport streamable-http --host 0.0.0.0 --port 8001
+```
+
+## Configuration
+
+| Environment Variable | Description | Default |
+|---------------------|-------------|---------|
+| `CALENDAR_URLS` | Comma-separated list of ICS feed URLs | *required* |
+
+## MCP Client Configuration
+
+Add to your MCP client config (e.g. Claude Desktop, VS Code):
 
 ```json
 {
-  "servers": {
-    "ost-calendar": {
-      "type": "http",
-      "url": "http://localhost:8001/mcp"
+  "mcpServers": {
+    "ics-calendar": {
+      "url": "http://localhost:8001/mcp/"
     }
   }
 }
 ```
 
-## Umgebungsvariablen (optional)
+## License
 
-| Variable | Beschreibung |
-|----------|-------------|
-| `STUNDENPLAN_URL` | Überschreibt die Stundenplan-ICS-URL |
-| `OUTLOOK_URL` | Überschreibt die Outlook-ICS-URL |
+MIT
